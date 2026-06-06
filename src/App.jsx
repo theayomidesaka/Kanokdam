@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Component } from 'react';
+import { saveToken, clearToken } from './lib/api';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -59,6 +60,7 @@ function App() {
 
   // Logout handler — clears auth and returns home
   const handleAdminLogout = () => {
+    clearToken();
     setIsAdminAuthed(false);
     setRoute('home');
     setSubRoute('overview');

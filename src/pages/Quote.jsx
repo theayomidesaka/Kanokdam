@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, CheckCircle2, ArrowRight } from 'lucide-react';
-import { getStoredData, setStoredData, initialInquiries, initialGenerators } from '../data/mockData';
+import { generators as generatorsApi, inquiries as inquiriesApi } from '../lib/api';
 
 export default function Quote() {
   const [formData, setFormData] = useState({
@@ -13,9 +13,11 @@ export default function Quote() {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [generators, setGenerators] = useState([]);
 
-  // Load latest generators for dropdown
-  const generators = getStoredData('kanokdam_generators_v2', initialGenerators);
+  useEffect(() => {
+    generatorsApi.list().then(setGenerators).catch(() => {});
+  }, []);
 
   // Ticker text
   const tickerItems = [
@@ -25,35 +27,15 @@ export default function Quote() {
     "5-YEAR WARRANTY"
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.phone || !formData.message) {
-      alert("Please fill in all required fields.");
-      return;
+    try {
+      await inquiriesApi.submit(formData);
+      setSubmitted(true);
+      setFormData({ name: '', company: '', email: '', phone: '', capacityNeeded: '50kVA', generatorInterest: 'Select a type of Inquiry', message: '' });
+    } catch (err) {
+      alert(err.message || 'Failed to submit. Please try again.');
     }
-
-    const currentInquiries = getStoredData('kanokdam_inquiries_v2', initialInquiries);
-    const newInquiry = {
-      id: `inq-${Date.now()}`,
-      ...formData,
-      date: new Date().toISOString().split('T')[0],
-      status: 'Pending'
-    };
-
-    const updatedInquiries = [newInquiry, ...currentInquiries];
-    setStoredData('kanokdam_inquiries_v2', updatedInquiries);
-    setSubmitted(true);
-
-    // Reset form
-    setFormData({
-      name: '',
-      company: '',
-      email: '',
-      phone: '',
-      capacityNeeded: '50kVA',
-      generatorInterest: 'Select a type of Inquiry',
-      message: ''
-    });
   };
 
   const handleInputChange = (e) => {

@@ -176,7 +176,7 @@ export default function Footer({ setRoute }) {
 
         {/* Giant Logo Text */}
         <div className="pt-16 pb-4 overflow-hidden select-none pointer-events-none">
-          <h1 className="text-[12vw] font-black text-white/5 leading-[0.8] text-center tracking-tighter font-sans uppercase">
+          <h1 className="text-[7vw] font-black text-white/5 leading-[0.8] text-center tracking-tighter font-sans uppercase">
             KANOKDAM
           </h1>
         </div>

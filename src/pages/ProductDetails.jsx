@@ -1,23 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { getStoredData, initialGenerators } from '../data/mockData';
+import { generators as generatorsApi } from '../lib/api';
 
-/* Map product id → local image */
-const imgMap = {
+const staticImgMap = {
   'sp-50':       '/SP50.png',
   'sp-60':       '/SP60.png',
   'accessories': '/accessories_bg.png',
 };
-const getImg = (id) => imgMap[id] || '/SPGeneric.png';
+const getImg = (gen) =>
+  gen?.images?.[0] || staticImgMap[gen?.id] || '/SPGeneric.png';
 
 export default function ProductDetails({ setRoute, productId, setSelectedProductId }) {
-  const generators = getStoredData('kanokdam_generators_v2', initialGenerators);
-  const generator  = generators.find(g => g.id === productId) || generators[0];
-  const recommendations = generators.filter(g => g.id !== generator.id).slice(0, 3);
+  const [generators, setGenerators] = useState([]);
+
+  useEffect(() => {
+    generatorsApi.list().then(setGenerators).catch(() => {});
+  }, []);
+
+  const generator = generators.find(g => g.id === productId) || generators[0];
+  const recommendations = generators.filter(g => g.id !== generator?.id).slice(0, 3);
 
   const [expandedSpecs, setExpandedSpecs] = useState(false);
 
-  const mainImg = getImg(generator.id);
+  if (!generator) return null;
+
+  const mainImg = getImg(generator);
 
   /* Spec rows always visible */
   const primarySpecs = [

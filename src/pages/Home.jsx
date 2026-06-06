@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, ChevronDown, CheckCircle } from 'lucide-react';
-import { services, getStoredData, initialGenerators } from '../data/mockData';
+import { services } from '../data/mockData';
+import { generators as generatorsApi } from '../lib/api';
 
 export default function Home({ setRoute, setSelectedProductId }) {
-  const generators = getStoredData('kanokdam_generators_v2', initialGenerators);
+  const [generators, setGenerators] = useState([]);
+
+  useEffect(() => {
+    generatorsApi.list().then(setGenerators).catch(() => {});
+  }, []);
 
   // We show YORC SP 50, SP 60 and Accessories in the featured section
   const featuredIds = ['sp-50', 'sp-60', 'accessories'];
@@ -52,7 +57,7 @@ export default function Home({ setRoute, setSelectedProductId }) {
       {/* 1. Hero Section */}
       <section className="relative w-full h-[calc(100vh-11.25rem)] flex items-center justify-center overflow-hidden bg-[#0A0E17]">
         {/* Background Graphic overlay */}
-        <div className="absolute inset-0 opacity-40 bg-cover bg-center bg-[url('/hero_bg.png')] mix-blend-luminosity"></div>
+        <div className="absolute inset-0 opacity-40 bg-cover bg-center bg-[url('/landing-page-engineer.jpg')] mix-blend-luminosity"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#05080E] via-[#0A0E17]/80 to-transparent"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6">
@@ -119,11 +124,11 @@ export default function Home({ setRoute, setSelectedProductId }) {
                 <div 
                   className="w-full h-full bg-cover bg-center" 
                   style={{ backgroundImage: `url(${
-                    gen.id === 'accessories' 
-                      ? '/accessories_bg.png' 
-                      : gen.id === 'sp-50' 
-                        ? '/generator_sp50_bg.png' 
-                        : '/generator_sp60_bg.png'
+                    gen.id === 'accessories'
+                      ? '/accessories_bg.png'
+                      : gen.id === 'sp-50'
+                        ? '/sp50-1.jpg'
+                        : '/sp60-1.jpg'
                   })` }}
                 ></div>
               </div>
@@ -214,7 +219,7 @@ export default function Home({ setRoute, setSelectedProductId }) {
             {/* Left Column: Industrial Machine Image */}
             <div className="lg:col-span-6 flex justify-center items-center lg:pr-16 lg:border-r lg:border-white/10">
               <img 
-                src="/industrial-machine-image.png" 
+                src="/build-different-last-longer.jpg" 
                 alt="Industrial Machine" 
                 className="w-full h-auto object-cover rounded-[2rem] shadow-2xl"
               />
@@ -297,7 +302,7 @@ export default function Home({ setRoute, setSelectedProductId }) {
             <div className="h-full bg-white rounded-[1.75rem] overflow-hidden border border-gray-100 shadow-sm flex flex-col justify-between">
               <div className="h-[26rem] overflow-hidden relative bg-gray-200">
                 <img 
-                  src="/construction-expert.png" 
+                  src="/diesel-and-gas-sales-expert.jpg" 
                   alt="Diesel & Gas Generator Expert" 
                   className="w-full h-full object-cover"
                 />
@@ -391,7 +396,7 @@ export default function Home({ setRoute, setSelectedProductId }) {
             {/* Left image column */}
             <div className="lg:col-span-6 flex justify-center items-center">
               <img 
-                src="/electrical-engineering.png" 
+                src="/leading-the-way-in-electrical.jpg" 
                 alt="Electrical Engineering" 
                 className="w-full h-auto object-cover rounded-[2rem] shadow-lg"
               />

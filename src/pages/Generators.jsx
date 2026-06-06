@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SlidersHorizontal, ArrowRight, Zap, Info, ShieldCheck } from 'lucide-react';
-import { getStoredData, initialGenerators } from '../data/mockData';
+import { generators as generatorsApi } from '../lib/api';
 
 export default function Generators({ setRoute, setSelectedProductId }) {
-  // Load products (handles any CRUD operations made in the admin panel)
-  const generators = getStoredData('kanokdam_generators_v2', initialGenerators);
+  const [generators, setGenerators] = useState([]);
+
+  useEffect(() => {
+    generatorsApi.list().then(setGenerators).catch(() => {});
+  }, []);
 
   return (
     <div className="w-full bg-[#FFFFFF] font-sans text-left">

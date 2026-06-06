@@ -1,22 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Search, Package, CheckCircle, RotateCcw, Upload, ImageOff } from 'lucide-react';
-import { getStoredData, setStoredData, initialGenerators } from '../../data/mockData';
+import { generators as generatorsApi } from '../../lib/api';
 
 const MAX_IMAGES = 4;
-
-/* Convert a File to a base64 data URL */
-function readAsDataURL(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.readAsDataURL(file);
-  });
-}
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export default function Inventory() {
-  const [generators, setGenerators] = useState(() =>
-    getStoredData('kanokdam_generators_v2', initialGenerators)
-  );
+  const [generators, setGenerators] = useState([]);
+
+  useEffect(() => {
+    generatorsApi.list().then(setGenerators).catch(() => {});
+  }, []);
 
   const [search, setSearch]       = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -59,12 +53,15 @@ export default function Inventory() {
     (gen.engineModel || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this generator? This cannot be undone.')) {
-      const updated = generators.filter(gen => gen.id !== id);
-      setGenerators(updated);
-      setStoredData('kanokdam_generators_v2', updated);
-      showNotification('Generator model deleted successfully.');
+      try {
+        await generatorsApi.delete(id);
+        setGenerators(prev => prev.filter(gen => gen.id !== id));
+        showNotification('Generator model deleted successfully.');
+      } catch (err) {
+        showNotification(`Error: ${err.message}`);
+      }
     }
   };
 
@@ -102,17 +99,18 @@ export default function Inventory() {
   };
 
   /* ── Image handling ─────────────────────────────────────────────── */
-  const handleImageFiles = async (files) => {
-    const slots = MAX_IMAGES - (form.images || []).length;
+  const [pendingImageFiles, setPendingImageFiles] = useState([]);
+
+  const handleImageFiles = (files) => {
+    const slots = MAX_IMAGES - (form.images || []).length - pendingImageFiles.length;
     if (slots <= 0) return;
-    const toProcess = Array.from(files).slice(0, slots);
-    const dataUrls = await Promise.all(toProcess.map(readAsDataURL));
-    setForm(prev => ({ ...prev, images: [...(prev.images || []), ...dataUrls] }));
+    const toAdd = Array.from(files).slice(0, slots);
+    setPendingImageFiles(prev => [...prev, ...toAdd]);
   };
 
   const handleFileInputChange = (e) => {
     if (e.target.files?.length) handleImageFiles(e.target.files);
-    e.target.value = '';   // reset so same file can be re-added after removal
+    e.target.value = '';
   };
 
   const handleDrop = (e) => {
@@ -120,51 +118,68 @@ export default function Inventory() {
     if (e.dataTransfer.files?.length) handleImageFiles(e.dataTransfer.files);
   };
 
-  const handleRemoveImage = (index) => {
-    setForm(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+  const handleRemoveImage = async (index) => {
+    const imgPath = form.images[index];
+    if (activeId && imgPath.startsWith('/uploads/')) {
+      try {
+        const updated = await generatorsApi.deleteImage(activeId, imgPath);
+        setForm(prev => ({ ...prev, images: updated.images }));
+        setGenerators(prev => prev.map(g => g.id === activeId ? updated : g));
+      } catch {}
+    } else {
+      setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+    }
+  };
+
+  const handleRemovePending = (index) => {
+    setPendingImageFiles(prev => prev.filter((_, i) => i !== index));
   };
   /* ──────────────────────────────────────────────────────────────── */
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.engineModel) {
       alert('Please enter Name and Engine Model.');
       return;
     }
 
-    let updatedList = [];
-    if (isEditing) {
-      updatedList = generators.map(gen =>
-        gen.id === activeId
-          ? { ...form, capacityKVA: Number(form.capacityKVA), price: Number(form.price) }
-          : gen
-      );
-      showNotification('Generator model updated successfully.');
-    } else {
-      const newGen = {
-        id: `gen-${Date.now()}`,
-        ...form,
-        capacityKVA: Number(form.capacityKVA),
-        price: Number(form.price),
-      };
-      updatedList = [newGen, ...generators];
-      showNotification('New generator model added successfully.');
-    }
+    const payload = {
+      name: form.name, brand: form.brand, capacityKVA: form.capacityKVA,
+      phase: form.phase, fuelType: form.fuelType, soundproof: form.soundproof,
+      engineModel: form.engineModel, alternatorBrand: form.alternatorBrand,
+      status: form.status, price: form.price, description: form.description,
+      specModel: form.specifications?.model, specPowerPrime: form.specifications?.powerPrime,
+      specPowerStandby: form.specifications?.powerStandby, specFrequency: form.specifications?.frequency,
+      specVoltage: form.specifications?.voltage, specSpeed: form.specifications?.speed,
+    };
 
-    setGenerators(updatedList);
-    setStoredData('kanokdam_generators_v2', updatedList);
-    setModalOpen(false);
+    try {
+      let saved;
+      if (isEditing) {
+        saved = await generatorsApi.update(activeId, payload);
+        showNotification('Generator model updated successfully.');
+      } else {
+        saved = await generatorsApi.create(payload);
+        showNotification('New generator model added successfully.');
+      }
+
+      // Upload any pending image files
+      if (pendingImageFiles.length > 0) {
+        saved = await generatorsApi.uploadImages(saved.id, pendingImageFiles);
+        setPendingImageFiles([]);
+      }
+
+      setGenerators(prev =>
+        isEditing ? prev.map(g => g.id === saved.id ? saved : g) : [saved, ...prev]
+      );
+      setModalOpen(false);
+    } catch (err) {
+      showNotification(`Error: ${err.message}`);
+    }
   };
 
   const resetToFactory = () => {
-    if (window.confirm('This will reset the inventory catalogue back to the default Perkins & YORC items. Proceed?')) {
-      setGenerators(initialGenerators);
-      setStoredData('kanokdam_generators_v2', initialGenerators);
-      showNotification('Inventory reset to factory defaults.');
-    }
+    showNotification('Use the seed script to reset to factory defaults.');
   };
 
   return (
@@ -239,7 +254,8 @@ export default function Inventory() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredGenerators.map(gen => {
-                const thumb = gen.images?.[0];
+                const rawThumb = gen.images?.[0];
+                const thumb = rawThumb?.startsWith('/uploads/') ? `${BASE_URL}${rawThumb}` : rawThumb;
                 return (
                   <tr key={gen.id} className="hover:bg-slate-950/20 transition-colors">
                     {/* Thumbnail */}
@@ -348,7 +364,7 @@ export default function Inventory() {
                       (up to {MAX_IMAGES} photos)
                     </span>
                   </span>
-                  {(form.images || []).length < MAX_IMAGES && (
+                  {(form.images || []).length + pendingImageFiles.length < MAX_IMAGES && (
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -372,29 +388,37 @@ export default function Inventory() {
 
                 {/* Image slots grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {/* Existing image previews */}
-                  {(form.images || []).map((src, i) => (
-                    <div key={i} className="relative group aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-slate-950">
-                      <img src={src} alt={`Product image ${i + 1}`} className="w-full h-full object-cover" />
-                      {/* Hover overlay */}
+                  {/* Saved image previews */}
+                  {(form.images || []).map((src, i) => {
+                    const displaySrc = src.startsWith('/uploads/') ? `${BASE_URL}${src}` : src;
+                    return (
+                      <div key={i} className="relative group aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-slate-950">
+                        <img src={displaySrc} alt={`Product image ${i + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button type="button" onClick={() => handleRemoveImage(i)} className="h-7 w-7 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                            <X className="h-4 w-4 text-white" />
+                          </button>
+                        </div>
+                        <span className="absolute bottom-1.5 left-2 text-[9px] font-bold text-white/60 bg-slate-950/40 rounded px-1">Photo {i + 1}</span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Pending (not yet uploaded) file previews */}
+                  {pendingImageFiles.map((file, i) => (
+                    <div key={`pending-${i}`} className="relative group aspect-[4/3] rounded-xl overflow-hidden border border-brand-red/30 bg-slate-950">
+                      <img src={URL.createObjectURL(file)} alt="pending" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(i)}
-                          className="h-7 w-7 rounded-full bg-red-600 flex items-center justify-center shadow-lg"
-                        >
+                        <button type="button" onClick={() => handleRemovePending(i)} className="h-7 w-7 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
                           <X className="h-4 w-4 text-white" />
                         </button>
                       </div>
-                      {/* Slot label */}
-                      <span className="absolute bottom-1.5 left-2 text-[9px] font-bold text-white/60 bg-slate-950/40 rounded px-1">
-                        Photo {i + 1}
-                      </span>
+                      <span className="absolute bottom-1.5 left-2 text-[9px] font-bold text-brand-red/80 bg-slate-950/40 rounded px-1">Pending</span>
                     </div>
                   ))}
 
                   {/* Empty drop-zone slots */}
-                  {Array.from({ length: MAX_IMAGES - (form.images || []).length }).map((_, i) => (
+                  {Array.from({ length: MAX_IMAGES - (form.images || []).length - pendingImageFiles.length }).map((_, i) => (
                     <div
                       key={`empty-${i}`}
                       onDragOver={e => e.preventDefault()}
@@ -404,13 +428,13 @@ export default function Inventory() {
                     >
                       <Upload className="h-5 w-5 text-slate-600 group-hover:text-brand-red transition-colors" />
                       <span className="text-[9px] font-semibold text-slate-600 group-hover:text-slate-400 transition-colors">
-                        {i === 0 && (form.images || []).length === 0 ? 'Add Photo' : 'Add More'}
+                        {i === 0 && (form.images || []).length === 0 && pendingImageFiles.length === 0 ? 'Add Photo' : 'Add More'}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                {(form.images || []).length > 0 && (
+                {((form.images || []).length > 0 || pendingImageFiles.length > 0) && (
                   <p className="text-[10px] text-slate-600 mt-2">
                     First image is used as the card thumbnail. Hover any image to remove it.
                   </p>

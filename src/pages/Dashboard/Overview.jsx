@@ -1,69 +1,52 @@
-import React from 'react';
-import { 
-  Package, 
-  Inbox, 
-  ShieldCheck, 
-  Clock, 
-  TrendingUp, 
+import React, { useState, useEffect } from 'react';
+import {
+  Package,
+  Inbox,
+  ShieldCheck,
+  Clock,
+  TrendingUp,
   MessageSquare,
   ArrowRight,
   Zap
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Legend
 } from 'recharts';
-import { getStoredData, initialGenerators, initialInquiries } from '../../data/mockData';
+import { dashboard, inquiries as inquiriesApi } from '../../lib/api';
 
 export default function Overview({ setSubRoute }) {
-  const generators = getStoredData('kanokdam_generators_v2', initialGenerators);
-  const inquiries = getStoredData('kanokdam_inquiries_v2', initialInquiries);
+  const [stats, setStats] = useState(null);
+  const [recentInquiries, setRecentInquiries] = useState([]);
 
-  // Stats calculation
-  const totalGenerators = generators.length;
-  const totalInquiries = inquiries.length;
-  const pendingInquiries = inquiries.filter(inq => inq.status === 'Pending').length;
-  const resolvedInquiries = inquiries.filter(inq => inq.status === 'Resolved').length;
+  useEffect(() => {
+    dashboard.stats().then(setStats).catch(() => {});
+    inquiriesApi.list().then((list) => setRecentInquiries(list.slice(0, 3))).catch(() => {});
+  }, []);
 
-  // Pie chart data: Brand distribution in inquiries
-  const brandData = inquiries.reduce((acc, inq) => {
-    const interest = inq.generatorInterest || '';
-    if (interest.toLowerCase().includes('perkins')) {
-      acc.perkins += 1;
-    } else if (interest.toLowerCase().includes('yorc')) {
-      acc.yorc += 1;
-    } else {
-      acc.other += 1;
-    }
-    return acc;
-  }, { perkins: 0, yorc: 0, other: 0 });
-
-  const pieData = [
-    { name: 'Perkins Sets', value: brandData.perkins || 1 },
-    { name: 'YORC Sets', value: brandData.yorc || 1 },
-    { name: 'General AMC', value: brandData.other || 1 }
-  ];
+  const totalGenerators  = stats?.totalGenerators  ?? '—';
+  const totalInquiries   = stats?.totalInquiries   ?? '—';
+  const pendingInquiries = stats?.pending          ?? '—';
+  const resolvedInquiries = stats?.resolved        ?? 0;
 
   const COLORS = ['#3B82F6', '#FF5A1F', '#F59E0B'];
 
-  // Bar chart data: Requests volume over last 5 days
-  // Let's create actual dates based on our local time (June 1 - June 5)
-  const barData = [
-    { date: 'June 01', inquiries: 2 },
-    { date: 'June 02', inquiries: 1 },
-    { date: 'June 03', inquiries: 3 },
-    { date: 'June 04', inquiries: 4 },
-    { date: 'June 05', inquiries: inquiries.filter(inq => inq.date === '2026-06-05').length + 1 }
-  ];
+  const pieData = stats?.brandDistribution?.length
+    ? stats.brandDistribution.map((b) => ({ name: b.brand, value: b.count }))
+    : [{ name: 'YORC Sets', value: 1 }];
+
+  const barData = stats?.monthlyInquiries?.length
+    ? stats.monthlyInquiries
+    : [];
 
   return (
     <div className="space-y-8 text-left">
@@ -263,13 +246,13 @@ export default function Overview({ setSubRoute }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {inquiries.slice(0, 3).map((inq) => (
+              {recentInquiries.map((inq) => (
                 <tr key={inq.id} className="hover:bg-slate-950/20 transition-colors">
                   <td className="py-3">
                     <span className="font-bold text-white block">{inq.name}</span>
                     <span className="text-[10px] text-slate-500">{inq.company || 'Private Customer'}</span>
                   </td>
-                  <td className="py-3 font-mono text-slate-400">{inq.date}</td>
+                  <td className="py-3 font-mono text-slate-400">{new Date(inq.createdAt).toLocaleDateString()}</td>
                   <td className="py-3 text-slate-300">{inq.generatorInterest}</td>
                   <td className="py-3 font-mono text-slate-400">{inq.capacityNeeded}</td>
                   <td className="py-3 text-right">

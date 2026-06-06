@@ -56,7 +56,7 @@ export default function About({ setRoute }) {
             {/* Top Half: Team Photo */}
             <div className="w-full h-72 sm:h-80 overflow-hidden relative">
               <img 
-                src="/kanokdam-worker.png" 
+                src="/sales-expert.jpg"
                 alt="Kanokdam Team" 
                 className="w-full h-full object-cover"
                 fetchpriority="high"
@@ -65,7 +65,7 @@ export default function About({ setRoute }) {
             {/* Bottom Half: Who Are We Text */}
             <div className="p-8 sm:p-10 space-y-4 text-left">
               <h2 className="font-noto text-lg sm:text-xl font-extrabold text-white uppercase tracking-wider">
-                Who Are We
+                Who We Are
               </h2>
               <p className="font-noto text-xs sm:text-sm text-gray-400 font-semibold leading-relaxed">
                 Our team is composed of highly professional, qualified engineers dedicated to unrivalled workmanship and accurate testing processes. We don't just supply power; we engineer reliability.
@@ -316,14 +316,14 @@ export default function About({ setRoute }) {
       {/* 6. Join the Team CTA */}
       <section
         className="relative w-full bg-cover bg-center overflow-hidden"
-        style={{ backgroundImage: "url('/out-team-bg.png')" }}
+        style={{ backgroundImage: "url('/join-kanokdam-team.jpg')" }}
       >
         {/* subtle dark overlay so text reads well */}
         <div className="absolute inset-0 bg-black/20" />
 
         <div className="relative z-10 flex flex-col items-center justify-center py-24 px-4 sm:px-6 lg:px-8">
           {/* White card */}
-          <div className="relative bg-white rounded-[2rem] shadow-xl w-full max-w-2xl px-10 pt-24 pb-14 text-center">
+          <div className="relative bg-white/75 backdrop-blur-sm rounded-[2rem] shadow-xl w-full max-w-2xl px-10 pt-24 pb-14 text-center">
 
             {/* Floating image — positioned to overflow above the card */}
             <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-44 h-44 flex items-center justify-center">

@@ -1,34 +1,26 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ShieldAlert, AlertCircle, Loader2 } from 'lucide-react';
-
-/* Hard-coded admin credentials (single-user, client-side auth) */
-const ADMIN_EMAIL    = 'admin@kanokdamlimited.com';
-const ADMIN_PASSWORD = 'Kanokdam@2024';
+import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { auth, saveToken } from '../lib/api';
 
 export default function AdminLogin({ onLogin }) {
-  const [email, setEmail]         = useState('');
-  const [password, setPassword]   = useState('');
-  const [showPw, setShowPw]       = useState(false);
-  const [error, setError]         = useState('');
-  const [loading, setLoading]     = useState(false);
+  const [email, setEmail]     = useState('');
+  const [password, setPassword] = useState('');
+  const [showPw, setShowPw]   = useState(false);
+  const [error, setError]     = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    /* Simulate a brief async check */
-    setTimeout(() => {
-      if (
-        email.trim().toLowerCase() === ADMIN_EMAIL &&
-        password === ADMIN_PASSWORD
-      ) {
-        onLogin();
-      } else {
-        setError('Invalid email or password. Please try again.');
-        setLoading(false);
-      }
-    }, 700);
+    try {
+      const { token } = await auth.login(email, password);
+      saveToken(token);
+      onLogin();
+    } catch (err) {
+      setError(err.message || 'Invalid email or password. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

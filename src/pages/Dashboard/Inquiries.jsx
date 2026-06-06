@@ -1,42 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Phone, Building, Calendar, Inbox, CheckCircle, Trash2, Eye, X, Filter } from 'lucide-react';
-import { getStoredData, setStoredData, initialInquiries } from '../../data/mockData';
+import { inquiries as inquiriesApi } from '../../lib/api';
 
 export default function Inquiries() {
-  const [inquiries, setInquiries] = useState(() => 
-    getStoredData('kanokdam_inquiries_v2', initialInquiries)
-  );
-
+  const [inquiries, setInquiries] = useState([]);
   const [activeInq, setActiveInq] = useState(null);
   const [filterStatus, setFilterStatus] = useState('All');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Status handler
-  const handleStatusChange = (id, newStatus) => {
-    const updated = inquiries.map(inq => 
-      inq.id === id ? { ...inq, status: newStatus } : inq
-    );
-    setInquiries(updated);
-    setStoredData('kanokdam_inquiries_v2', updated);
-    
-    // Update active inquiry detail view if open
-    if (activeInq && activeInq.id === id) {
-      setActiveInq(prev => ({ ...prev, status: newStatus }));
+  useEffect(() => {
+    inquiriesApi.list().then(setInquiries).catch(() => {});
+  }, []);
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await inquiriesApi.updateStatus(id, newStatus);
+      setInquiries(prev => prev.map(inq => inq.id === id ? { ...inq, status: newStatus } : inq));
+      if (activeInq?.id === id) setActiveInq(prev => ({ ...prev, status: newStatus }));
+      showNotification(`Inquiry status updated to ${newStatus}.`);
+    } catch (err) {
+      showNotification(`Error: ${err.message}`);
     }
-    
-    showNotification(`Inquiry status updated to ${newStatus}.`);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this inquiry? This cannot be undone.")) {
-      const updated = inquiries.filter(inq => inq.id !== id);
-      setInquiries(updated);
-      setStoredData('kanokdam_inquiries_v2', updated);
-      
-      if (activeInq && activeInq.id === id) {
-        setActiveInq(null);
+      try {
+        await inquiriesApi.delete(id);
+        setInquiries(prev => prev.filter(inq => inq.id !== id));
+        if (activeInq?.id === id) setActiveInq(null);
+        showNotification("Inquiry deleted successfully.");
+      } catch (err) {
+        showNotification(`Error: ${err.message}`);
       }
-      showNotification("Inquiry deleted successfully.");
     }
   };
 
@@ -45,8 +41,7 @@ export default function Inquiries() {
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
-  // Filtered inquiries
-  const filteredInquiries = inquiries.filter(inq => 
+  const filteredInquiries = inquiries.filter(inq =>
     filterStatus === 'All' || inq.status === filterStatus
   );
 
