@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Send, CheckCircle2, ArrowRight } from 'lucide-react';
 import { generators as generatorsApi, inquiries as inquiriesApi } from '../lib/api';
 
@@ -47,6 +48,16 @@ export default function Quote() {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Request a Quote | Kanokdam Limited — Generator & Engineering Solutions Nigeria</title>
+        <meta name="description" content="Get a custom quote for YORC soundproof generators, Annual Maintenance Contracts (AMC), or electrical and mechanical engineering services from Kanokdam Limited." />
+        <link rel="canonical" href="https://kanokdam.com/quote" />
+        <meta property="og:title" content="Request a Quote | Kanokdam Limited" />
+        <meta property="og:description" content="Get a custom quote for generators, AMC, or engineering services from Kanokdam Limited." />
+        <meta property="og:url" content="https://kanokdam.com/quote" />
+        <meta property="og:type" content="website" />
+      </Helmet>
     <div className="w-full bg-white font-sans text-left">
       
       {/* 1. Hero Header */}
@@ -246,5 +257,6 @@ export default function Quote() {
       </section>
 
     </div>
+    </>
   );
 }

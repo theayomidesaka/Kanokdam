@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Zap, Plus, Minus } from 'lucide-react';
 
-export default function About({ setRoute }) {
+export default function About() {
+  const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
 
   const faqs = [
@@ -29,6 +32,17 @@ export default function About({ setRoute }) {
   ];
 
   return (
+    <>
+      <Helmet>
+        <title>About Kanokdam Limited | Industrial Power Engineering Nigeria</title>
+        <meta name="description" content="Learn about Kanokdam Limited — Nigeria's trusted mechanical and electrical engineering firm specializing in premium soundproof YORC generators, installations, and Annual Maintenance Contracts." />
+        <link rel="canonical" href="https://kanokdam.com/about" />
+        <meta property="og:title" content="About Kanokdam Limited | Industrial Power Engineering Nigeria" />
+        <meta property="og:description" content="Decades of experience in mechanical and electrical engineering. YORC soundproof generators, AMC, and installation services across Nigeria." />
+        <meta property="og:url" content="https://kanokdam.com/about" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://kanokdam.com/sales-expert.jpg" />
+      </Helmet>
     <div className="w-full bg-[#FFFFFF] font-sans text-left">
       
       {/* 1. Header Section: Story & Commitment */}
@@ -44,7 +58,7 @@ export default function About({ setRoute }) {
               Kanokdam Limited is a formidable global brand with core competencies in Mechanical and Electrical Engineering Works, specializing in high-performance soundproof diesel and gas generators. Built on a foundation of integrity and technical excellence, we serve large estates, construction projects, and key industrial sectors, ensuring seamless, uninterrupted power supply.
             </p>
             <button
-              onClick={() => setRoute('quote')}
+              onClick={() => navigate('/quote')}
               className="font-noto inline-block w-fit px-8 py-3.5 bg-[#0B0F19] hover:bg-slate-800 active:scale-95 text-white font-bold text-xs rounded-full transition-all duration-200 uppercase tracking-wider shadow-md"
             >
               Get in touch
@@ -357,5 +371,6 @@ export default function About({ setRoute }) {
       </section>
 
     </div>
+    </>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, Component } from 'react';
-import { saveToken, clearToken } from './lib/api';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { clearToken } from './lib/api';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -8,7 +10,6 @@ import Generators from './pages/Generators';
 import ProductDetails from './pages/ProductDetails';
 import Quote from './pages/Quote';
 import AdminLogin from './pages/AdminLogin';
-
 import DashboardLayout from './components/DashboardLayout';
 import Overview from './pages/Dashboard/Overview';
 import Inventory from './pages/Dashboard/Inventory';
@@ -19,15 +20,12 @@ class ErrorBoundary extends Component {
     super(props);
     this.state = { hasError: false, error: null };
   }
-
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
-
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught an error", error, errorInfo);
+    console.error('ErrorBoundary caught an error', error, errorInfo);
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -47,101 +45,68 @@ class ErrorBoundary extends Component {
   }
 }
 
-function App() {
-  const [route, setRoute]                       = useState('home');
-  const [subRoute, setSubRoute]                 = useState('overview');
-  const [selectedProductId, setSelectedProductId] = useState('sp-50');
-  const [isAdminAuthed, setIsAdminAuthed]       = useState(false);
-
-  // Scroll to top on route/subroute change
+function ScrollToTop() {
+  const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [route, subRoute]);
+  }, [pathname]);
+  return null;
+}
 
-  // Logout handler — clears auth and returns home
+function PublicLayout({ children }) {
+  return (
+    <div className="flex flex-col min-h-screen bg-white text-gray-800">
+      <Navbar />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+    </div>
+  );
+}
+
+function PrivateRoute({ isAuthed, children }) {
+  return isAuthed ? children : <Navigate to="/admin" replace />;
+}
+
+function App() {
+  const [isAdminAuthed, setIsAdminAuthed] = useState(false);
+
   const handleAdminLogout = () => {
     clearToken();
     setIsAdminAuthed(false);
-    setRoute('home');
-    setSubRoute('overview');
-  };
-
-  const renderContent = () => {
-    // ── Admin: Login Gate ──────────────────────────────────────────
-    if (route === 'admin-login') {
-      if (isAdminAuthed) {
-        // Already logged in — jump straight to dashboard
-        setRoute('dashboard-main');
-        return null;
-      }
-      return (
-        <AdminLogin
-          onLogin={() => {
-            setIsAdminAuthed(true);
-            setRoute('dashboard-main');
-            setSubRoute('overview');
-          }}
-        />
-      );
-    }
-
-    // ── Admin: Dashboard (protected) ───────────────────────────────
-    if (route.startsWith('dashboard-')) {
-      if (!isAdminAuthed) {
-        // Redirect to login if not authenticated
-        setRoute('admin-login');
-        return null;
-      }
-      return (
-        <DashboardLayout
-          currentSubRoute={subRoute}
-          setSubRoute={setSubRoute}
-          setRoute={setRoute}
-          onLogout={handleAdminLogout}
-        >
-          {subRoute === 'overview'   && <Overview setSubRoute={setSubRoute} />}
-          {subRoute === 'inventory'  && <Inventory />}
-          {subRoute === 'inquiries'  && <Inquiries />}
-        </DashboardLayout>
-      );
-    }
-
-    // ── Public Website ─────────────────────────────────────────────
-    return (
-      <div className="flex flex-col min-h-screen bg-white text-gray-800">
-        <Navbar currentRoute={route} setRoute={setRoute} />
-
-        <main className="flex-grow">
-          {route === 'home' && (
-            <Home setRoute={setRoute} setSelectedProductId={setSelectedProductId} />
-          )}
-          {route === 'about' && (
-            <About setRoute={setRoute} />
-          )}
-          {route === 'products' && (
-            <Generators setRoute={setRoute} setSelectedProductId={setSelectedProductId} />
-          )}
-          {route === 'product-details' && (
-            <ProductDetails
-              setRoute={setRoute}
-              productId={selectedProductId}
-              setSelectedProductId={setSelectedProductId}
-            />
-          )}
-          {route === 'quote' && (
-            <Quote />
-          )}
-        </main>
-
-        <Footer setRoute={setRoute} />
-      </div>
-    );
   };
 
   return (
     <ErrorBoundary>
+      <ScrollToTop />
       <div className="min-h-screen bg-white font-sans antialiased">
-        {renderContent()}
+        <Routes>
+          <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+          <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
+          <Route path="/generators" element={<PublicLayout><Generators /></PublicLayout>} />
+          <Route path="/generators/:id" element={<PublicLayout><ProductDetails /></PublicLayout>} />
+          <Route path="/quote" element={<PublicLayout><Quote /></PublicLayout>} />
+
+          <Route path="/admin" element={
+            isAdminAuthed
+              ? <Navigate to="/dashboard/overview" replace />
+              : <AdminLogin onLogin={() => setIsAdminAuthed(true)} />
+          } />
+
+          <Route path="/dashboard/*" element={
+            <PrivateRoute isAuthed={isAdminAuthed}>
+              <DashboardLayout onLogout={handleAdminLogout}>
+                <Routes>
+                  <Route path="overview"   element={<Overview />} />
+                  <Route path="inventory"  element={<Inventory />} />
+                  <Route path="inquiries"  element={<Inquiries />} />
+                  <Route path="*"          element={<Navigate to="overview" replace />} />
+                </Routes>
+              </DashboardLayout>
+            </PrivateRoute>
+          } />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </ErrorBoundary>
   );
