@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Shield } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   const navLinks = [
     { label: 'Home',     to: '/' },
@@ -40,13 +39,6 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/admin')}
-              className="flex items-center space-x-1 text-gray-400 hover:text-gray-900 transition-colors p-2 rounded-lg"
-              title="Admin Panel"
-            >
-              <Shield className="h-4 w-4" />
-            </button>
             <Link
               to="/quote"
               className="font-noto flex items-center justify-center h-[3.375rem] rounded-[1.25rem] bg-brand-red px-6 text-sm font-bold text-white shadow-md shadow-brand-red/10 transition-all duration-200 hover:bg-red-600 active:scale-95"
@@ -83,23 +75,13 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="h-px bg-gray-100 my-2"></div>
-          <div className="flex flex-col space-y-3">
-            <Link
-              to="/admin"
-              onClick={() => setIsOpen(false)}
-              className="font-noto flex items-center justify-center space-x-2 w-full text-sm font-semibold text-gray-500 py-3 rounded-lg border border-gray-100 bg-gray-50"
-            >
-              <Shield className="h-4 w-4" />
-              <span>Admin Control Panel</span>
-            </Link>
-            <Link
-              to="/quote"
-              onClick={() => setIsOpen(false)}
-              className="font-noto flex items-center justify-center space-x-2 w-full h-[3.375rem] rounded-[1.25rem] bg-brand-red text-sm font-bold text-white shadow-lg"
-            >
-              <span>Get a Quote</span>
-            </Link>
-          </div>
+          <Link
+            to="/quote"
+            onClick={() => setIsOpen(false)}
+            className="font-noto flex items-center justify-center w-full h-[3.375rem] rounded-[1.25rem] bg-brand-red text-sm font-bold text-white shadow-lg"
+          >
+            Get a Quote
+          </Link>
         </div>
       </div>
     </nav>
