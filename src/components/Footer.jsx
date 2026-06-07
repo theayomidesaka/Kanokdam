@@ -62,7 +62,7 @@ export default function Footer() {
 
             <div className="flex flex-wrap items-center gap-8 pt-2">
               <div className="flex items-center space-x-3">
-                <a href="#" className="h-8 w-8 rounded-full border border-white/20 hover:border-brand-red hover:text-white text-gray-400 flex items-center justify-center transition-all">
+                <a href="https://www.instagram.com/kanokdam_power.ng?igsh=YXZ4cnVjY2piZDdx&utm_source=qr" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full border border-white/20 hover:border-brand-red hover:text-white text-gray-400 flex items-center justify-center transition-all">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -88,7 +88,7 @@ export default function Footer() {
                   </svg>
                 </a>
               </div>
-              <span className="font-noto text-sm text-gray-300 font-medium">Mon - Fri : 8am - 7pm</span>
+              <a href="tel:+2349150111122" className="font-noto text-sm text-gray-300 font-medium hover:text-white transition-colors">09150111122</a>
             </div>
           </div>
 
@@ -124,7 +124,7 @@ export default function Footer() {
 
               <div className="text-sm font-medium">
                 <span className="text-gray-500 mr-1.5">Phone:</span>
-                <span className="text-white font-semibold">+234 (0) 915 011 1122</span>
+                <a href="tel:+2349150111122" className="text-white font-semibold hover:text-brand-red transition-colors">09150111122</a>
               </div>
             </div>
           </div>
