@@ -74,7 +74,7 @@ export default function Home() {
 
         {/* 1. Hero Section */}
         <section className="relative w-full h-[calc(100vh-11.25rem)] flex items-center justify-center overflow-hidden bg-[#0A0E17]">
-          <div className="absolute inset-0 opacity-40 bg-cover bg-center bg-[url('/landing-page-engineer.jpg')] mix-blend-luminosity"></div>
+          <div className="absolute inset-0 opacity-40 bg-cover bg-center bg-[url('/hero_bg.png')] mix-blend-luminosity"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#05080E] via-[#0A0E17]/80 to-transparent"></div>
           <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6">
             <h1 className="font-noto text-4xl sm:text-[8.75rem] font-extrabold uppercase tracking-tight text-white leading-none">
