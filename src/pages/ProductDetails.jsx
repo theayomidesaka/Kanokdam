@@ -176,8 +176,7 @@ export default function ProductDetails() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {recommendations.map((gen, idx) => {
                 const recImgMap = { 'sp-50': '/SP50.png', 'sp-60': '/SP60.png', 'accessories': '/accessories_bg.png' };
-                const shuffled = idx % 2 === 0 ? '/SP50.png' : '/SP60.png';
-                const cardImg = recImgMap[gen.id] ?? shuffled;
+                const cardImg = gen.images?.[0] || recImgMap[gen.id] || '/SPGeneric.png';
 
                 const features = gen.id === 'accessories'
                   ? [
